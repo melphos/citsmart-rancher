@@ -1,5 +1,5 @@
 citsmart-itsm:
- image: registry.citsmartcloud.com:5000/templates/citsmart:tests
+ image: registrydf.citsmartcloud.com:5000/templates/citsmart:tests
  container_name: citsmart-itsm
  restart: always
  tty: true
@@ -11,7 +11,7 @@ citsmart-itsm:
  command: /usr/bin/start.sh
 
 citsmart-banco:
- image: registry.citsmartcloud.com:5000/templates/postgresql95:tests
+ image: registrydf.citsmartcloud.com:5000/templates/postgresql95:tests
  container_name: citsmart-banco
  restart: always
  privileged: true
