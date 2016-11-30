@@ -1,0 +1,26 @@
+citsmart-itsm:
+ image: registry.citsmartcloud.com:5000/templates/citsmart:tests
+ container_name: citsmart-itsm
+ restart: always
+ tty: true
+ stdin_open: true
+ expose:
+   - '8080'
+ links:
+   - citsmart-banco
+ command: /usr/bin/start.sh
+
+citsmart-banco:
+ image: registry.citsmartcloud.com:5000/templates/postgresql95:tests
+ container_name: citsmart-banco
+ restart: always
+ privileged: true
+ tty: true
+ stdin_open: true
+ ports:
+   - '5432'
+ command: /usr/bin/start.sh
+# environment:
+#   - POSTGRES_DB=citsmart
+#   - POSTGRES_USER=citsmart
+#   - POSTGRES_PASSWORD=citsmart_senha
