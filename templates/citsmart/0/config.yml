@@ -1,7 +1,6 @@
 ---
-name: CITSmart
-description: >
-  Citsmart 7 Enterprise com PostgreSQL 9.5
+name: CITSmart Enterprise 7
+description: Citsmart 7 Enterprise com PostgreSQL 9.5
 version: 7
 category: ITSM
 maintainer: Otavio Lemos <otavio.lemos@centralit.com.br>
