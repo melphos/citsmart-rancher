@@ -1,0 +1,9 @@
+---
+name: CITSmart
+description: >
+  Citsmart 7 Enterprise com PostgreSQL 9.5
+version: 7
+category: ITSM
+maintainer: Otavio Lemos <otavio.lemos@centralit.com.br>
+license: GLPv2
+projectURL: http://www.citsmart365.com
