@@ -33,7 +33,7 @@ node {
     ])
 
     echo ("Ambiente a ser criado: "+ envName['nome'])
-    ambiente = envName['nome']
+    //ambiente = envName['nome']
  }
 
  stage('Criando Infraestrutura'){
