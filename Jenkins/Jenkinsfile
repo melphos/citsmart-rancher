@@ -25,14 +25,15 @@ node {
 
     rocketChat("Preparando o ambiente > Nome")
     
-    ambiente = input(
+    def envName = input(
       id: 'nomeAmbiente', message: 'Nome do ambiente',
       ok: 'Criar!',
       parameters: [
       [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Entre com o nome do ambiente', name: 'nome']
     ])
 
-    echo ("Projeto SEI APP [TAG]: "+ ambiente['nome'])
+    echo ("Ambiente a ser criado: "+ envName['nome'])
+    ambiente = envName['nome']
  }
 
  stage('Criando Infraestrutura'){
