@@ -32,8 +32,9 @@ node {
       [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Entre com o nome do ambiente', name: 'nome']
     ])
 
-    echo ("Ambiente a ser criado: "+ envName['nome'])
+    //echo ("Ambiente a ser criado: "+ envName['nome'])
     //ambiente = envName['nome']
+    ambiente = "TESTE XX"
  }
 
  stage('Criando Infraestrutura'){
@@ -47,14 +48,14 @@ node {
 
 
  stage ("Adicionando Host Rancher Server") {
-    rocketChat("Adicionando instancia ao Environment" + ambiente['nome'] )    
+    rocketChat("Adicionando instancia ao Environment" + ambiente )    
     
     // Executar comando SSH dentro da instancia e iniciar rancher-agent
     echo "Executar comando SSH dentro da instancia e iniciar rancher-agent"
 
     
     docker.withServer('tcp://192.168.0.17:2375') {
-      sh 'docker run '
+      //sh 'docker run '
     }
 
  }
@@ -62,7 +63,7 @@ node {
   stage ("Executar STACK") {
     rocketChat("Criando STACK")    
     docker.withServer('tcp://192.168.0.17:2375') {
-       rancher('up stack') 
+       //rancher('up stack') 
     }
 
  }
