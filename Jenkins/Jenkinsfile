@@ -23,7 +23,7 @@ node {
 
   stage ('Preparação do ambiente') {
 
-    rocketChat("Preparando o ambiente (Nome)")
+    rocketChat("Preparando o ambiente > Nome")
     
     nomeAmbiente = input(
       id: 'nomeAmbiente', message: 'Nome do ambiente',
@@ -33,6 +33,7 @@ node {
     ])
 
     echo ("Projeto SEI APP [TAG]: "+nomeAmbiente['nome'])
+ }
 
  stage('Criando Infraestrutura'){
     rocketChat("Stage [Criando Infraestrutura]:Executando Route53")    
