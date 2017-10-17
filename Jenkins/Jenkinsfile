@@ -1,0 +1,267 @@
+#!groovy
+
+/*
+  Script pipeline para construção do ambiente Citsmart
+
+  Autor: Ivan Santos (contato@ivan.consulting)
+  Autor: Otávio Lemos (otavio.lemos@citsmart.com)
+
+  Rancher Keys:
+  Environment: <NOME DO ENVIRONMENT>
+  Access Key: <KEY>
+  Secret Key: <SECRET>
+  
+  TODO: 
+
+*/
+
+def nomeAmbiente
+def localizacao
+
+node {
+  //rocketChat("DevOps: Pipeline: Iniciando Build")    
+
+  stage ('Preparação do ambiente') {
+
+    rocketChat("Preparando o ambiente (Nome)")
+    
+    tagSelect = input(
+      id: 'tagSelect', message: 'Selecionar as TAGS dos projetos',
+      ok: 'Deploy!',
+      parameters: [
+      [$class: 'TextParameterDefinition', defaultValue: '3.0.5-pi2.0-pe1.1.0-ws0.4.2-pen1.0-dti4', description: 'TAG projeto SEI APP', name: 'seiApp'],
+      [$class: 'TextParameterDefinition', defaultValue: 'mod-sei-barramento', description: 'TAG projeto SEI APP', name: 'modSeiBarramento'],
+      [$class: 'TextParameterDefinition', defaultValue: 'sei-conectagov-0.9', description: 'TAG projeto SEI APP', name: 'seiConectaGov']
+    ])
+
+    echo ("Projeto SEI APP [TAG]: "+tagSelect['seiApp'])
+    echo ("Projeto Mod SEI Barramento [TAG]: "+tagSelect['modSeiBarramento'])
+    echo ("Projeto SEI ConectaGov [TAG]: "+tagSelect['seiConectaGov'])
+
+    tagSeiApp = tagSelect['seiApp']
+   
+    parallel (
+        "sei-app" : {
+            // Clone do projeto para execução da compilação e alteração de templates (DOCKER)
+            echo "Checkout projeto sei-app"
+            checkout([$class: 'GitSCM', branches: [[name: "refs/tags/${tagSelect['seiApp']}"]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'sei-app']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '35222564-bca3-43cc-9c13-3e89fa964cd1', url: 'https://git.planejamento.gov.br/mp/sei-app.git']]])
+        }, 
+        "mod-sei-barramento" : {
+            // Clone do projeto para execução da compilação e alteração de templates (DOCKER)
+            echo "Checkout projeto mod-sei-barramento"
+            checkout([$class: 'GitSCM', branches: [[name: 'pipeline-teste']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'mod-sei-barramento']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '35222564-bca3-43cc-9c13-3e89fa964cd1', url: 'https://git.planejamento.gov.br/mp/mod-sei-barramento.git']]])
+        },
+    )
+    // Clone do projeto para execução da compilação e alteração de templates (DOCKER)
+    echo "Checkout projeto sei-conectagov"
+    checkout([$class: 'GitSCM', branches: [[name: 'refs/tags/sei-conectagov-0.9']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'sei-conectagov']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '35222564-bca3-43cc-9c13-3e89fa964cd1', url: 'https://git.planejamento.gov.br/mp/sei-app.git']]])
+  }
+
+/*
+ stage('Quality Check'){
+    rocketChat("Stage [Sonar Scanner]:Executando verificação Sonar")    
+    dir('mod-sei-barramento') {
+        // TODO: Alterar o local do arquivo de propriedades do Sonar para o diretório Jenkins (pipeline) 
+        //   TODO: Alterar o comando de execução do Sonar.   
+        //   TODO: Validar o retorno da execução do scanner (Ex.: Se pontuação for acima de X cancelar pipeline)
+        //
+        
+        // requires SonarQube Scanner 2.8+
+        def scannerHome = tool 'Sonar Runner 2.8';
+        withSonarQubeEnv('Sonar 5.5') {
+          //sh "${scannerHome}/bin/sonar-scanner"
+          sh '''
+          
+          export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+          export PATH=${JAVA_HOME}/bin:${PATH}
+
+          java -version
+          /var/jenkins_home/tools/hudson.plugins.sonar.SonarRunnerInstallation/Sonar_Runner_2.8/bin/sonar-scanner 
+          
+          '''
+        }
+    }
+ }
+
+
+ stage ("Build SEI-APP") {
+    rocketChat("Criando contâiner do SEI-APP")    
+    // Workaround: PATH no Dockerfile para add arquivos. 
+    seiAppWorkaround()
+    // Fim workaround 
+
+    dir ('sei-app') {
+      docker.withServer('tcp://10.209.40.19:2375') {
+        //def project = "sei"
+        def image = "sei-app"
+        //def IMAGE_TAG = "${env.BUILD_TAG}"
+        def IMAGE_TAG = "3.0.5-pi2.0-pe1.1.0-ws0.4.2-pen1.0-dti4-ci-tese"
+        def hubMPDG = "hub.docker.planejamento.gov.br"
+        //def pp = docker.build "${hubMPDG}/${project}/${image}:${IMAGE_TAG}"
+        //rocketChat("Stage [Build Image]: Executando docker.build " +${hubMPDG}+"/"+${image}+":"+${IMAGE_TAG})
+        def sei = docker.build "${hubMPDG}/${image}:${IMAGE_TAG}"
+        sei.push()
+      }
+    }
+
+ }
+
+  stage ("Build ConectaGov") {
+    rocketChat("Criando contâiner do ConectaGov")    
+    // Workaround: PATH no Dockerfile para add arquivos. 
+    conectaGovWorkaround()
+    // Fim workaround 
+
+    dir ('sei-conectagov') {
+      docker.withServer('tcp://10.209.40.19:2375') {
+        //def project = "sei"
+        def image = "sei-conectagov"
+        //def IMAGE_TAG = "${env.BUILD_TAG}"
+        def IMAGE_TAG = "sei-conectagov-0.9"
+        def hubMPDG = "hub.docker.planejamento.gov.br"
+        //def pp = docker.build "${hubMPDG}/${project}/${image}:${IMAGE_TAG}"
+        //rocketChat("Stage [Build Image]: Executando docker.build " +${hubMPDG}+"/"+${image}+":"+${IMAGE_TAG})
+        def sei = docker.build "${hubMPDG}/${image}:${IMAGE_TAG}"
+        sei.push()
+      }
+    }
+
+ }
+
+
+ stage ('Verificação Stacks'){
+    //
+    //    1st1270   SEI-PEN-HOMOLOG-MPDG
+    //    1st1271   SEI-PEN-HOMOLOG-MD 
+    //    path: docker/
+    //
+    parallel (
+        "SEI-PEN-HOMOLOG-MPDG" : {
+            vrfRancherStack("SEI-PEN-HOMOLOG-MPDG")
+        }, 
+        "SEI-PEN-HOMOLOG-MD" : {
+            vrfRancherStack("SEI-PEN-HOMOLOG-MD")
+        },
+    )
+
+ }
+
+*/
+
+ stage ('Aprovação: Homologação') {
+    rocketChat("Proceder com o Deploy em homologação ? https://sei-pen-md.hom.nuvem.gov.br, https://sei-pen-mp.hom.nuvem.gov.br)?\n" +env.BUILD_URL+ "/input")
+    input 'Proceder com o deploy em homologação (https://sei-pen-md.hom.nuvem.gov.br, https://sei-pen-mp.hom.nuvem.gov.br)?'
+    
+    //Alterar TAG docker-compose.yml
+    dir ('mod-sei-barramento/docker') {
+        tagSeiApp = "3.0.5-pi2.0-pe1.1.0-ws0.4.2-pen1.0-dti4"
+        
+        echo ('TAG: ' + tagSeiApp)
+        sh(returnStdout: false, script: 'sed -i -e "s/sei-app:.*$/sei-app:'+tagSeiApp+'/g" sei-mpdg-docker-compose.yml')
+        sh 'grep "sei-app:" sei-mpdg-docker-compose.yml'
+        
+        docker.withServer('tcp://10.209.40.19:2375') {
+            def seiAppID = sh(returnStdout: true, script: "docker run --rm -i -e RANCHER_URL='http://rancher.dth.nuvem.gov.br:8080' -e RANCHER_ACCESS_KEY=CBB404EDF2389806B2C3 -e RANCHER_SECRET_KEY=cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN rancher/cli ps | grep 'SEI-PEN-HOMOLOG-MPDG' | grep 'sei-app' | awk '{print \$1}'").trim()
+            
+            if ( ! seiAppID ) {
+                echo "Erro ao capturar ID do container SEI-APP"
+                rocketChat("Erro ao capturar ID do container SEI-APP")    
+                currentBuild.result = 'FAILURE'
+                return
+            }
+
+
+            rocketChat("Atualizando TAG container SEI-APP (" +seiAppID+ ") Stack Rancher DTH ")
+            rancherCli("upgrade " + seiAppID + " --auto_complete --timeout=600 --imageUuid=docker:hub.docker.planejamento.gov.br/sei-app:" +tagSeiApp)
+        
+        }    
+    }
+ }
+ 
+ stage ('Testes'){
+
+    echo "Checkout projeto sei-teste"
+    sh 'if [ ! -d "testsTMP" ]; then mkdir testsTMP; else echo "Diretorio testsTMP ja existe"; fi'
+    dir ("./testsTMP") {
+        echo "Checkout projeto mod-sei-barramento"
+        checkout([$class: 'GitSCM', branches: [[name: 'testes_barramento_pen_refatoracao']], doGenerateSubmoduleConfigurations: false, extensions: [[$class: 'RelativeTargetDirectory', relativeTargetDir: 'mod-sei-barramento']], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '35222564-bca3-43cc-9c13-3e89fa964cd1', url: 'https://git.planejamento.gov.br/30942092899/sei-teste.git']]])
+        //git branch: 'testes_barramento_pen_refatoracao', changelog: false, poll: false, url: 'https://softwarepublico.gov.br/gitlab/mp/sei-teste.git'
+    }
+
+    rocketChat("Executando tests funcionais")
+    
+    docker.withServer('tcp://10.209.40.19:2375'){
+        def phpSeleniumStatus = sh(returnStdout: true, script: 'docker ps -f name="php-selenium-x" -q').trim()
+        echo ('STATUS: ' + phpSeleniumStatus )
+        if (phpSeleniumStatus) {
+            sh 'docker stop php-selenium-x && docker rm -v php-selenium-x'
+        } else {
+            echo "DEBUG: Container desligado"    
+        }
+        
+        sh 'docker run -dti --name php-selenium-x -v /opt/jenkinsNFS/jenkins_slave_mvn/workspace/mod-sei-barramento-tmp/testsTMP/mod-sei-barramento:/srv -w /srv hub.docker.planejamento.gov.br/ci/jenkins-php-slave:1.1 bash'
+        sh 'docker exec -i php-selenium-x composer install --optimize-autoloader --no-interaction --no-progress --prefer-dist'
+        sh "docker exec -i php-selenium-x sed -i -e 's/localhost/ci.intra.planejamento/g' ./vendor/phpunit/phpunit-selenium/PHPUnit/Extensions/Selenium2TestCase.php"
+        sh 'docker exec -i php-selenium-x ./vendor/bin/phpunit'
+        sh 'docker stop php-selenium-x'
+        sh 'docker rm -v php-selenium-x'
+    }
+ }
+deleteDir()
+}
+
+
+def rocketChat(msg) {
+    rocketSend avatar: 'https://chat.planejamento.gov.br/static/ff676c77/images/headshot.png', channel: 'sei-barramento', message: "Build: ${env.BUILD_NUMBER}: ${msg}", rawMessage: true
+}
+
+def rancherCli(cmd) {
+    sh "docker run --rm -i -e CATTLE_URL='http://rancher.dth.nuvem.gov.br:8080' -e CATTLE_ACCESS_KEY='CBB404EDF2389806B2C3' -e CATTLE_SECRET_KEY='cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN' hub.docker.planejamento.gov.br/rancher-cli ${cmd}"
+}
+
+def rancher(cmd){
+    sh "docker run --rm -i -e RANCHER_URL='http://rancher.dth.nuvem.gov.br:8080' -e RANCHER_SERVER_URL='rancher.dth.nuvem.gov.br:8080' -e RANCHER_ACCESS_KEY=CBB404EDF2389806B2C3 -e RANCHER_SECRET_KEY=cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN rancher/cli ${cmd}"
+}
+
+def seiAppWorkaround(){
+    rocketChat("Stage [Build Image]:Executando 'workaround' de movimentação de diretórios para executar com sucesso o 'docker build' do contêiner do SEI-APP")    
+    dir ('sei-app'){
+        sh 'rm -rf mod-sei-barramento'
+    }
+    sh '''
+        mv mod-sei-barramento sei-app/
+        mkdir mod-sei-barramento
+        mv sei-app/mod-sei-barramento/docker mod-sei-barramento/
+        mv sei-app/mod-sei-barramento/Jenkins mod-sei-barramento/
+    '''
+}
+
+def conectaGovWorkaround(){
+    rocketChat("Stage [Build Image]:Executando 'workaround' de movimentação de diretórios para executar com sucesso o 'docker build' do contêiner do SEI-APP")    
+    dir ('sei-conectagov'){
+        sh 'rm -rf mod-sei-barramento'
+    }
+    sh '''
+        mv sei-app/mod-sei-barramento sei-conectagov/ 
+    '''
+}
+
+def vrfRancherStack(stack){
+    rocketChat("Validando Stack no Rancher DTH:\n" + stack)   
+    echo("Verificando STACK: "+ stack )
+    
+    docker.withServer('tcp://10.209.40.19:2375'){
+        def stackHomStatus = sh(returnStdout: true, script: "docker run --rm -i -e RANCHER_URL='http://rancher.dth.nuvem.gov.br:8080' -e RANCHER_SERVER_URL='rancher.dth.nuvem.gov.br:8080' -e RANCHER_ACCESS_KEY=CBB404EDF2389806B2C3 -e RANCHER_SECRET_KEY=cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN rancher/cli stack ls | grep ${stack} | awk '{print \$3}'").trim()
+        echo ('STATUS STACK: ' + stack +': ' + stackHomStatus)
+        if (stackHomStatus != 'healthy' ) {
+            echo "Inicializando container"
+            rocketChat("STACK: "+ stack+ ":DOWN -- INICIANDO ...")
+            // Problemas ao executar o UP
+            //rancher("up --stack "+${stack})
+            rancher("start "+${stack})
+        } else {
+            echo "STACK Funcional"    
+            rocketChat("Stack " + stack + " (Rancher DTH) = OK ")   
+        }
+    }
+}
