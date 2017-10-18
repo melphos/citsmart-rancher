@@ -31,7 +31,7 @@ node {
       [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Define your subdomain name', name: 'name']
     ])
 
-    subDomain = envName['name']
+    subDomain = "envName['name']"
     }
 
   stage ('Environment Selection') {
