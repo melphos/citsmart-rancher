@@ -38,7 +38,7 @@ node {
 
      def envSelection = input id: 'EnvSelection', message: 'Select the environmento you want', ok: 'Select', parameters: [choice(choices: ['AWS-Oregon', 'AWS-SP', 'MATRIX-SP'], description: 'Rancher Environment', name: 'environment')], submitter: 'otavio.lemos'
 
-    environment = envSelection['environment']
+    environment = envSelection
     if (environment=='AWS-Oregon'){
         environmentIp=oregon01.citsmartcloud.com
     } else if (environment=='AWS-SP'){
