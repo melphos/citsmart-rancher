@@ -1,0 +1,162 @@
+#!groovy
+
+/*
+  Script pipeline para construção do ambiente Citsmart
+
+  Autor: Ivan Santos (contato@ivan.consulting)
+  Autor: Otávio Lemos (otavio.lemos@citsmart.com)
+
+  Rancher Keys:
+  Environment: <NOME DO ENVIRONMENT>
+  Access Key: A548DA390D2002F8B5AD
+  Secret Key: HjuzzUvpEzqWqJMK44RQn1AvCfuJ1pCB6sePKqhW
+  
+  TODO: 
+
+*/
+
+def subDomain
+def environmentIp
+def environment
+def jenkinsUser
+
+node {
+  
+    stage ('Stack Name/Subdomain Name') {
+
+      def envName = input(
+      id: 'subDomain', message: 'Stack/Subdomain name',
+      ok: 'OK',
+      parameters: [
+      [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Define your subdomain name', name: 'name']
+    ])
+
+    subDomain = envName
+    }
+
+
+  stage ('Environment Selection') {
+
+      def envSelection = input(
+      id: 'EnvSelection', message: 'Select the environmento you want',
+      ok: 'Select',
+      parameters: [
+      [$class: 'TextParameterDefinition', defaultValue: 'AWS-SP', description: 'Define your Environment name:\n AWS-SP\nAWS-Oregon\nMATRIX-SP', name: 'name']
+    ])
+
+    //environment = envSelection
+    environment = envSelection
+    if (environment=='AWS-Oregon'){
+        environmentIp="oregon01"
+    } else if (environment=='AWS-SP'){
+        environmentIp="aws-sp"
+    } else if (environment=='MATRIX-SP'){
+        environmentIp="atrixsp01"
+    }
+
+
+  }
+
+  /*
+  stage ('Environment Selection') {
+
+     def envSelection = input(
+        id: 'EnvSelection', 
+        message: 'Select the environmento you want', 
+        ok: 'Select', 
+        parameters: [
+            choice(choices: 
+                    ['AWS-Oregon', 
+                     'AWS-SP', 
+                     'MATRIX-SP'
+                    ], 
+            description: 'Rancher Environment', 
+            name: 'env'
+        )], 
+        submitter: 'otavio.lemos'
+     )
+     
+
+
+    environment = envSelection['env']
+    if (environment=='AWS-Oregon'){
+        environmentIp=oregon01
+    } else if (environment=='AWS-SP'){
+        environmentIp=aws-sp
+    } else if (environment=='MATRIX-SP'){
+        environmentIp=matrixsp01
+    }
+
+
+  }
+  */
+
+/*
+AWS-Oregon Chave awscitsmartcloud.pem
+AWS-SP Chave citsmartcosp.pem
+MATRIX-SP Chave citsmartcomatrix01.pem
+
+citsmartdb
+citsmartdbuser
+citsmartdbpassword
+
+ jenkinsUser = env.BUILD_USER_ID
+*/
+/*
+
+ stage('Create DNS'){
+    
+    echo subDomain    
+    sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo cli53 rrcreate citsmartcloud.com \'$subDomain 300 CNAME ${environmentIp}\'\""
+}
+
+stage('Create Environment'){
+    
+    echo environment
+    sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/createenv.sh \'$subDomain\'\""
+}
+
+stage('Create Stack'){
+    
+    echo environment
+    sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/rancherCmd.sh \'$subDomain\'\""
+}
+
+*/
+stage('Update LoadBalancer'){
+    
+    sh '''
+      set +x
+      NEW_LBCONFIG_JSON='
+        {
+           "type":"lbConfig",
+           "config":null,
+           "portRules":[
+              {
+                 "type":"portRule",
+                 "hostname":"devops.ivan.consulting",
+                 "path":"",
+                 "priority":2,
+                 "protocol":"http",
+                 "serviceId":"1s7",
+                 "sourcePort":80,
+                 "targetPort":8080
+              }
+           ],
+           "certificateIds":[
+
+           ],
+           "defaultCertificateId":null,
+           "stickinessPolicy":null
+        }'
+
+        curl -s -u "0048D8D97300C19B4980:KCUWFADZ76ZfQCyqMUh8TqzVxTKHRvcwrwxvcust" \
+        -X PUT \
+        -H 'Content-Type: application/json' \
+        -d "${NEW_LBCONFIG_JSON}" \
+        "http://192.168.0.17:8080/v2-beta/projects/1st5/loadbalancerservices/1s11?action=upgrade"
+    '''
+}
+
+deleteDir()
+}
