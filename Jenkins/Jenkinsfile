@@ -115,6 +115,11 @@ citsmartdbpassword
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo cli53 rrcreate citsmartcloud.com \'$subDomain 300 CNAME ${environmentIp}\'\""
 }
 
+stage('Create Environment'){
+    
+    echo environment
+    sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/createenv.sh \'$subDomain\'\""
+}
 
 /*
  stage ("Adicionando Host Rancher Server") {
