@@ -41,7 +41,7 @@ node {
       id: 'EnvSelection', message: 'Select the environmento you want',
       ok: 'Select',
       parameters: [
-      [$class: 'TextParameterDefinition', defaultValue: 'AWS-SP;', description: 'Define your Environment name: AWS-SP\nAWS-Oregon\nMATRIX-SP', name: 'name']
+      [$class: 'TextParameterDefinition', defaultValue: 'AWS-SP', description: 'Define your Environment name:\n AWS-SP\nAWS-Oregon\nMATRIX-SP', name: 'name']
     ])
 
     //environment = envSelection
