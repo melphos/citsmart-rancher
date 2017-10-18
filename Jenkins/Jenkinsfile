@@ -34,6 +34,30 @@ node {
     subDomain = envName
     }
 
+
+  stage ('Environment Selection') {
+
+      def envSelection = input(
+      id: 'EnvSelection', message: 'Select the environmento you want',
+      ok: 'Select',
+      parameters: [
+      [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Define your subdomain name', name: 'name']
+    ])
+
+    //environment = envSelection
+    environment = envSelection['env']
+    if (environment=='AWS-Oregon'){
+        environmentIp=oregon01.citsmartcloud.com
+    } else if (environment=='AWS-SP'){
+        environmentIp=aws-sp.citsmartcloud.com
+    } else if (environment=='MATRIX-SP'){
+        environmentIp=matrixsp01.citsmartcloud.com
+    }
+
+
+  }
+
+  /*
   stage ('Environment Selection') {
 
      def envSelection = input(
@@ -51,6 +75,8 @@ node {
         )], 
         submitter: 'otavio.lemos'
      )
+     
+
 
     environment = envSelection['env']
     if (environment=='AWS-Oregon'){
@@ -62,8 +88,8 @@ node {
     }
 
 
-    }
-
+  }
+  */
 
 /*
 AWS-Oregon Chave awscitsmartcloud.pem
