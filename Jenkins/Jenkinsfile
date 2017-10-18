@@ -106,7 +106,7 @@ citsmartdbpassword
 
  stage('Create DNS record'){
     
-    echo subDomain\
+    echo subDomain
     for (i in [ 'a', 'b', 'c' ]) {
         echo i
         sh "echo \"from shell i=$i\""
