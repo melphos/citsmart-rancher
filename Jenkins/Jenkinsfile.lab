@@ -127,6 +127,7 @@ stage('Update LoadBalancer'){
     
     sh '''
       set +x
+      echo \"SubDomain: $subDomain\"
       NEW_LBCONFIG_JSON='
         {
            "type":"lbConfig",
@@ -134,7 +135,7 @@ stage('Update LoadBalancer'){
            "portRules":[
               {
                  "type":"portRule",
-                 "hostname":"${subDomain}.citsmart.com",
+                 "hostname":"$subDomain.citsmart.com",
                  "path":"",
                  "priority":2,
                  "protocol":"http",
