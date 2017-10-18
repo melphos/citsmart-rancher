@@ -15,41 +15,71 @@
 
 */
 
-def ambiente
-def localizacao
+def subDomain
+def environmentIp
+def environment
+def jenkinsUser
 
 node {
-  //rocketChat("DevOps: Pipeline: Iniciando Build")    
+  
+    stage ('Stack Name/Subdomain Name') {
 
-  stage ('Preparação do ambiente') {
-
-    rocketChat("Preparando o ambiente > Nome")
-    
-    def envName = input(
-      id: 'nomeAmbiente', message: 'Nome do ambiente',
-      ok: 'Criar!',
+      def envName = input(
+      id: 'subDomain', message: 'Stack/Subdomain name',
+      ok: 'OK',
       parameters: [
-      [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Entre com o nome do ambiente', name: 'nome']
+      [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Define your subdomain name', name: 'name']
     ])
 
-    //echo ("Ambiente a ser criado: "+ envName['nome'])
-    //ambiente = envName['nome']
-    ambiente = "TESTE XX"
- }
+    subDomain = envName['name']
+    }
 
- stage('Criando Infraestrutura'){
-    rocketChat("Stage [Criando Infraestrutura]:Executando Route53")    
+  stage ('Environment Selection') {
 
-    rocketChat("Stage [Criando Infraestrutura]:Executando criação de instancias")
+     def envSelection = input id: 'EnvSelection', message: 'Select the environmento you want', ok: 'Select', parameters: [choice(choices: ['AWS-Oregon', 'AWS-SP', 'MATRIX-SP'], description: 'Rancher Environment', name: 'environment')], submitter: 'otavio.lemos'
 
-    rocketChat("Stage [Criando Infraestrutura]:Executando criação de volumes NFS")
+    environment = envSelection['environment']
+    if (environment=='AWS-Oregon'){
+        environmentIp=oregon01.citsmartcloud.com
+    } elsif (environment=='AWS-SP'){
+        environmentIp=aws-sp.citsmartcloud.com
+    } elsif (environment=='MATRIX-SP'){
+        environmentIp=matrixsp01.citsmartcloud.com
+    }
 
- }
+
+    }
 
 
- stage ("Adicionando Host Rancher Server") {
-    rocketChat("Adicionando instancia ao Environment" + ambiente )    
+/*
+AWS-Oregon Chave awscitsmartcloud.pem
+AWS-SP Chave citsmartcosp.pem
+MATRIX-SP Chave citsmartcomatrix01.pem
+
+citsmartdb
+citsmartdbuser
+citsmartdbpassword
+
+ jenkinsUser = env.BUILD_USER_ID
+*/
+
+
+ stage('Create DNS record'){
     
+    sh 'ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin "sudo cli53 rrcreate citsmartcloud.com \'${subDomain} 300 CNAME ${environmentIp}\'"'
+
+ }
+
+
+sh '''
+ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin "sudo /backup/createenv.sh '${subDomain}'
+'''
+
+
+
+/*
+ stage ("Adicionando Host Rancher Server") {
+      
     // Executar comando SSH dentro da instancia e iniciar rancher-agent
     echo "Executar comando SSH dentro da instancia e iniciar rancher-agent"
 
@@ -72,6 +102,7 @@ node {
  stage ('Verificação Stacks'){
         vrfRancherStack("citsmart")
  }
+*/
 
 deleteDir()
 }
