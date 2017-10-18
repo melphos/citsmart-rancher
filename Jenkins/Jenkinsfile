@@ -104,7 +104,7 @@ citsmartdbpassword
 */
 
 
- stage('Create DNS record'){
+ stage('Create DNS'){
     
     echo subDomain    
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo cli53 rrcreate citsmartcloud.com \'$subDomain 300 CNAME ${environmentIp}\'\""
@@ -116,45 +116,11 @@ stage('Create Environment'){
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/createenv.sh \'$subDomain\'\""
 }
 
-stage('Create Environment'){
+stage('Create Stack'){
     
     echo environment
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/rancherCmd.sh \'$subDomain\'\""
 }
 
 deleteDir()
-}
-
-
-def rocketChat(msg) {
-    rocketSend channel: 'citsmart-env-create', message: "Build: ${env.BUILD_NUMBER}: ${msg}", rawMessage: true
-}
-
-def rancherCli(cmd) {
-    sh "docker run --rm -i -e CATTLE_URL='http://http://192.168.0.17:8080' -e CATTLE_ACCESS_KEY='CBB404EDF2389806B2C3' -e CATTLE_SECRET_KEY='cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN' etlweather/gaucho ${cmd}"
-}
-
-def rancher(cmd){
-    sh "docker run --rm -i -e RANCHER_URL='http://http://192.168.0.17:8080' -e RANCHER_SERVER_URL='http://192.168.0.17:8080' -e RANCHER_ACCESS_KEY=CBB404EDF2389806B2C3 -e RANCHER_SECRET_KEY=cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN rancher/cli ${cmd}"
-}
-
-
-def vrfRancherStack(stack){
-    rocketChat("Validando Stack no Rancher DTH:\n" + stack)   
-    echo("Verificando STACK: "+ stack )
-    
-    docker.withServer('tcp://192.168.0.17:2375'){
-        def stackHomStatus = sh(returnStdout: true, script: "docker run --rm -i -e RANCHER_URL='http://http://192.168.0.17:8080' -e RANCHER_SERVER_URL='http://192.168.0.17:8080' -e RANCHER_ACCESS_KEY=CBB404EDF2389806B2C3 -e RANCHER_SECRET_KEY=cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN rancher/cli stack ls | grep ${stack} | awk '{print \$3}'").trim()
-        echo ('STATUS STACK: ' + stack +': ' + stackHomStatus)
-        if (stackHomStatus != 'healthy' ) {
-            echo "Inicializando container"
-            rocketChat("STACK: "+ stack+ ":DOWN -- INICIANDO ...")
-            // Problemas ao executar o UP
-            //rancher("up --stack "+${stack})
-            rancher("start "+${stack})
-        } else {
-            echo "STACK Funcional"    
-            rocketChat("Stack " + stack + " (Rancher DTH) = OK ")   
-        }
-    }
 }
