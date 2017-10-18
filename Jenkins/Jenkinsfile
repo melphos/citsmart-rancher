@@ -45,7 +45,7 @@ node {
     ])
 
     //environment = envSelection
-    environment = envSelection['env']
+    environment = envSelection
     if (environment=='AWS-Oregon'){
         environmentIp=oregon01.citsmartcloud.com
     } else if (environment=='AWS-SP'){
