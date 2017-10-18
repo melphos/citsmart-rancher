@@ -36,7 +36,21 @@ node {
 
   stage ('Environment Selection') {
 
-     def envSelection = input id: 'EnvSelection', message: 'Select the environmento you want', ok: 'Select', parameters: [choice(choices: ['AWS-Oregon', 'AWS-SP', 'MATRIX-SP'], description: 'Rancher Environment', name: 'env')], submitter: 'otavio.lemos'
+     def envSelection = input(
+        id: 'EnvSelection', 
+        message: 'Select the environmento you want', 
+        ok: 'Select', 
+        parameters: [
+            choice(choices: 
+                    ['AWS-Oregon', 
+                     'AWS-SP', 
+                     'MATRIX-SP'
+                    ], 
+            description: 'Rancher Environment', 
+            name: 'env'
+        )], 
+        submitter: 'otavio.lemos'
+     )
 
     environment = envSelection['env']
     if (environment=='AWS-Oregon'){
