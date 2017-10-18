@@ -106,12 +106,7 @@ citsmartdbpassword
 
  stage('Create DNS record'){
     
-    echo subDomain
-    for (i in [ 'a', 'b', 'c' ]) {
-        echo i
-        sh "echo \"from shell i=$i\""
-    }
-    
+    echo subDomain    
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo cli53 rrcreate citsmartcloud.com \'$subDomain 300 CNAME ${environmentIp}\'\""
 }
 
@@ -121,32 +116,11 @@ stage('Create Environment'){
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/createenv.sh \'$subDomain\'\""
 }
 
-/*
- stage ("Adicionando Host Rancher Server") {
-      
-    // Executar comando SSH dentro da instancia e iniciar rancher-agent
-    echo "Executar comando SSH dentro da instancia e iniciar rancher-agent"
-
+stage('Create Environment'){
     
-    docker.withServer('tcp://192.168.0.17:2375') {
-      //sh 'docker run '
-    }
-
- }
-
-  stage ("Executar STACK") {
-    rocketChat("Criando STACK")    
-    docker.withServer('tcp://192.168.0.17:2375') {
-       //rancher('up stack') 
-    }
-
- }
-
-
- stage ('Verificação Stacks'){
-        vrfRancherStack("citsmart")
- }
-*/
+    echo environment
+    sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo /backup/rancherCmd.sh \'$subDomain\'\""
+}
 
 deleteDir()
 }
@@ -157,7 +131,7 @@ def rocketChat(msg) {
 }
 
 def rancherCli(cmd) {
-    sh "docker run --rm -i -e CATTLE_URL='http://http://192.168.0.17:8080' -e CATTLE_ACCESS_KEY='CBB404EDF2389806B2C3' -e CATTLE_SECRET_KEY='cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN' hub.docker.planejamento.gov.br/rancher-cli ${cmd}"
+    sh "docker run --rm -i -e CATTLE_URL='http://http://192.168.0.17:8080' -e CATTLE_ACCESS_KEY='CBB404EDF2389806B2C3' -e CATTLE_SECRET_KEY='cff6Xkb1nGt1pLt4aRPKZKRbGNHC6YK4epqhY6hN' etlweather/gaucho ${cmd}"
 }
 
 def rancher(cmd){
