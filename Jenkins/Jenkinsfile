@@ -112,13 +112,14 @@ citsmartdbpassword
         sh "echo \"from shell i=$i\""
     }
     
-
+    sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo cli53 rrcreate citsmartcloud.com $subDomain 300 CNAME ${environmentIp}\""
     
+    /*
     sh '''
         echo `echo $subDomain`
         ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin "sudo cli53 rrcreate citsmartcloud.com $subDomain 300 CNAME ${environmentIp}"
     '''
-    
+    */
 }
 
 
