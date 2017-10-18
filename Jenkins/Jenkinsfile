@@ -37,16 +37,11 @@ node {
 
   stage ('Environment Selection') {
 
-      choice = new ChoiceParameterDefinition('Param name', ['option1', 'option2'] as String[], 'Description')
-      input message: 'Select one', parameters: [choice]
-
-      echo "ESCOLHA: " + choice
-
       def envSelection = input(
       id: 'EnvSelection', message: 'Select the environmento you want',
       ok: 'Select',
       parameters: [
-      [$class: 'TextParameterDefinition', defaultValue: 'citsmart', description: 'Define your subdomain name', name: 'name']
+      [$class: 'TextParameterDefinition', defaultValue: 'AWS-SP;', description: 'Define your Environment name: AWS-SP\nAWS-Oregon\nMATRIX-SP', name: 'name']
     ])
 
     //environment = envSelection
