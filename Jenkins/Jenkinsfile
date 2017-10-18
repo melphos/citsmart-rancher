@@ -113,10 +113,8 @@ citsmartdbpassword
     }
     
     sh "ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin \"sudo cli53 rrcreate citsmartcloud.com \'$subDomain 300 CNAME ${environmentIp}\'\""
-    //ssh -p29022 -i /var/jenkins_home/citsmartcosp.pem manager.citsmart.com -ladmin "sudo cli53 rrcreate citsmartcloud.com 'citsmartffff 300
-CNAME matrixsp01.citsmartcloud.com'"
     
-    /*
+   /*
     sh '''
         echo `echo $subDomain`
         ssh -p29022 -i $HOME/citsmartcosp.pem manager.citsmart.com -ladmin "sudo cli53 rrcreate citsmartcloud.com $subDomain 300 CNAME ${environmentIp}"
