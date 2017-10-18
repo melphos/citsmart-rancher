@@ -41,9 +41,9 @@ node {
     environment = envSelection['environment']
     if (environment=='AWS-Oregon'){
         environmentIp=oregon01.citsmartcloud.com
-    } elsif (environment=='AWS-SP'){
+    } else if (environment=='AWS-SP'){
         environmentIp=aws-sp.citsmartcloud.com
-    } elsif (environment=='MATRIX-SP'){
+    } else if (environment=='MATRIX-SP'){
         environmentIp=matrixsp01.citsmartcloud.com
     }
 
